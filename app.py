@@ -1,16 +1,36 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from docx import Document
-from pptx import Presentation
-import fitz
+from dotenv import load_dotenv
+
 import requests
+import os
+import fitz
+import docx
+from pptx import Presentation
+
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-def extract_pdf(file):
 
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+headers = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "Content-Type": "application/json"
+}
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+# PDF Extraction
+def extract_pdf_text(file):
     text = ""
-
     pdf = fitz.open(stream=file.read(), filetype="pdf")
 
     for page in pdf:
@@ -19,51 +39,28 @@ def extract_pdf(file):
     return text
 
 
-def summarize_ai(text):
+# DOCX Extraction
+def extract_docx_text(file):
+    doc = docx.Document(file)
+    text = ""
 
-    response = requests.post(
+    for para in doc.paragraphs:
+        text += para.text + "\n"
 
-        url="https://openrouter.ai/api/v1/chat/completions",
-
-        headers={
-
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-
-            "Content-Type": "application/json"
-
-        },
-
-        json={
-
-            "model": "mistralai/mistral-7b-instruct",
-
-            "messages": [
-
-                {
-
-                    "role":"user",
-
-                    "content": f"Summarize these study notes professionally with bullet points:\n\n{text}"
-
-                }
-
-            ]
-
-        }
-
-    )
-
-    data = response.json()
-
-    print(data)
-
-    return data["choices"][0]["message"]["content"]
+    return text
 
 
-@app.route("/")
-def home():
+# PPTX Extraction
+def extract_pptx_text(file):
+    prs = Presentation(file)
+    text = ""
 
-    return render_template("index.html")
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if hasattr(shape, "text"):
+                text += shape.text + "\n"
+
+    return text
 
 
 @app.route("/summarize", methods=["POST"])
@@ -71,60 +68,78 @@ def summarize():
 
     try:
 
-        notes = request.form.get("notes", "")
+        text = ""
 
-        uploaded_file = request.files.get("file")
+        # FILE MODE
+        if "file" in request.files:
 
-        extracted_text = ""
+            file = request.files["file"]
+            filename = file.filename.lower()
 
-        if uploaded_file:
-
-            filename = uploaded_file.filename.lower()
-
-            if filename.endswith(".txt"):
-
-                extracted_text = uploaded_file.read().decode("utf-8")
+            if filename.endswith(".pdf"):
+                text = extract_pdf_text(file)
 
             elif filename.endswith(".docx"):
-
-                doc = Document(uploaded_file)
-
-                for para in doc.paragraphs:
-                    extracted_text += para.text + " "
-
-            elif filename.endswith(".pdf"):
-
-                extracted_text = extract_pdf(uploaded_file)
+                text = extract_docx_text(file)
 
             elif filename.endswith(".pptx"):
+                text = extract_pptx_text(file)
 
-                prs = Presentation(uploaded_file)
+            else:
+                return jsonify({
+                    "summary": "Unsupported file format"
+                })
 
-                for slide in prs.slides:
+        # TEXT MODE
+        else:
+            data = request.json
+            text = data.get("notes", "")
 
-                    for shape in slide.shapes:
+        prompt = f"""
+        You are an advanced AI learning assistant.
 
-                        if hasattr(shape, "text"):
-                            extracted_text += shape.text + " "
+        Analyze the provided study material carefully.
 
-        final_text = notes + " " + extracted_text
+        Generate:
 
-        if final_text.strip() == "":
+        1. Professional Summary
+        2. Important Bullet Points
+        3. Key Concepts
+        4. Student Friendly Explanation
+        5. Exam Preparation Notes
 
-            return jsonify({
-                "summary":"No text found."
-            })
+        Study Material:
 
-        summary = summarize_ai(final_text)
+        {text}
+        """
+
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json={
+                "model": "openai/gpt-4.1-mini",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            }
+        )
+
+        result = response.json()
+
+        print(result)
+
+        summary = result["choices"][0]["message"]["content"]
 
         return jsonify({
-            "summary":summary
+            "summary": summary
         })
 
     except Exception as e:
-
         return jsonify({
-            "summary":str(e)
+            "summary": str(e)
         })
 
 

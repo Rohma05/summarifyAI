@@ -1,6 +1,8 @@
 flask
 flask-cors
+python-dotenv
 requests
 python-docx
 python-pptx
 pymupdf
+gunicorn
