@@ -28,10 +28,15 @@ def home():
     return render_template("index.html")
 
 
-# PDF Extraction
+# PDF
 def extract_pdf_text(file):
+
     text = ""
-    pdf = fitz.open(stream=file.read(), filetype="pdf")
+
+    pdf = fitz.open(
+        stream=file.read(),
+        filetype="pdf"
+    )
 
     for page in pdf:
         text += page.get_text()
@@ -39,9 +44,11 @@ def extract_pdf_text(file):
     return text
 
 
-# DOCX Extraction
+# DOCX
 def extract_docx_text(file):
+
     doc = docx.Document(file)
+
     text = ""
 
     for para in doc.paragraphs:
@@ -50,13 +57,17 @@ def extract_docx_text(file):
     return text
 
 
-# PPTX Extraction
+# PPTX
 def extract_pptx_text(file):
+
     prs = Presentation(file)
+
     text = ""
 
     for slide in prs.slides:
+
         for shape in slide.shapes:
+
             if hasattr(shape, "text"):
                 text += shape.text + "\n"
 
@@ -70,48 +81,59 @@ def summarize():
 
         text = ""
 
-        # FILE MODE
+        # FILE
         if "file" in request.files:
 
             file = request.files["file"]
-            filename = file.filename.lower()
 
-            if filename.endswith(".pdf"):
-                text = extract_pdf_text(file)
+            if file.filename != "":
 
-            elif filename.endswith(".docx"):
-                text = extract_docx_text(file)
+                filename = file.filename.lower()
 
-            elif filename.endswith(".pptx"):
-                text = extract_pptx_text(file)
+                if filename.endswith(".pdf"):
+                    text = extract_pdf_text(file)
 
-            else:
-                return jsonify({
-                    "summary": "Unsupported file format"
-                })
+                elif filename.endswith(".docx"):
+                    text = extract_docx_text(file)
 
-        # TEXT MODE
-        else:
-            data = request.json
-            text = data.get("notes", "")
+                elif filename.endswith(".pptx"):
+                    text = extract_pptx_text(file)
+
+                else:
+                    return jsonify({
+                        "summary": "Unsupported file format"
+                    })
+
+        # NOTES
+        notes = request.form.get("notes")
+
+        if notes:
+            text += "\n" + notes
+
+        # EMPTY
+        if not text.strip():
+
+            return jsonify({
+                "summary": "Please upload a file or enter notes."
+            })
 
         prompt = f"""
-        You are an advanced AI learning assistant.
+You are an advanced AI study assistant.
 
-        Analyze the provided study material carefully.
+Analyze the following study material carefully.
 
-        Generate:
+Generate:
 
-        1. Professional Summary
-        2. Important Bullet Points
-        3. Key Concepts
-        4. Student Friendly Explanation
-        5. Exam Preparation Notes
+1. Professional Summary
+2. Important Bullet Points
+3. Key Concepts
+4. Easy Student Explanation
+5. Exam Preparation Notes
 
-        Study Material:
+Study Material:
 
-        {text}
-        """
+{text[:12000]}
+"""
 
         response = requests.post(
             API_URL,
@@ -138,6 +160,7 @@ def summarize():
         })
 
     except Exception as e:
+
         return jsonify({
             "summary": str(e)
         })

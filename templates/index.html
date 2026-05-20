@@ -1,45 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Summarify AI</title>
 
-    <link rel="stylesheet" href="/static/style.css">
+    <link
+        rel="stylesheet"
+        href="/static/style.css"
+    >
 
     <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    >
+
 </head>
+
 <body>
 
     <nav>
+
         <div class="logo">
+
             <i class="fa-solid fa-brain"></i>
+
             Summarify AI
+
         </div>
 
         <ul>
+
             <li>Home</li>
+
             <li>Features</li>
+
             <li>AI Notes</li>
+
             <li>Contact</li>
+
         </ul>
+
     </nav>
 
 
     <section class="hero">
 
         <div class="left">
+
             <h1>
-                AI Powered
-                Study Summaries
+                AI Powered Study Summaries
             </h1>
 
             <p>
-                Upload PDF, DOCX or PPT files and get instant
-                AI generated summaries, key concepts and notes.
+                Upload PDF, DOCX or PPT files and get instant AI generated summaries.
             </p>
 
             <div class="upload-box">
@@ -49,31 +70,45 @@
                     placeholder="Paste your notes here..."
                 ></textarea>
 
-                <input type="file" id="fileInput">
+                <input
+                    type="file"
+                    id="fileInput"
+                >
 
                 <button onclick="generateSummary()">
                     Generate AI Summary
                 </button>
 
             </div>
+
         </div>
 
 
         <div class="right">
 
             <div class="glass-card">
+
                 <h2>
                     AI Summary
                 </h2>
 
-                <div id="loading" class="loading hidden">
+                <div
+                    id="loading"
+                    class="loading hidden"
+                >
+
                     <div class="spinner"></div>
-                    Generating intelligent summary...
+
+                    Generating summary...
+
                 </div>
 
                 <div id="result">
+
                     Your AI summary will appear here...
+
                 </div>
+
             </div>
 
         </div>
@@ -81,6 +116,49 @@
     </section>
 
 
-<script src="/static/script.js"></script>
+    <section class="features">
+
+        <div class="feature-card">
+
+            <i class="fa-solid fa-file-pdf"></i>
+
+            <h3>PDF Support</h3>
+
+            <p>
+                Upload and summarize PDF files instantly.
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <i class="fa-solid fa-file-word"></i>
+
+            <h3>DOCX Notes</h3>
+
+            <p>
+                Generate AI study notes automatically.
+            </p>
+
+        </div>
+
+        <div class="feature-card">
+
+            <i class="fa-solid fa-file-powerpoint"></i>
+
+            <h3>PPT Summaries</h3>
+
+            <p>
+                AI extracts key presentation concepts.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <script src="/static/script.js"></script>
+
 </body>
+
 </html>
